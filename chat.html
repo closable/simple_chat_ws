@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>Chat demo on WS</title>
+        <link rel="stylesheet" type="text/css" href="modal.css"/>
+
+        <style type="text/css">
+            html {
+                position: relative;
+                min-height: 100%;
+            }
+            body {
+                /*font-family: "Courier New", sans-serif ;*/
+                font-family: Arial, Helvetica, sans-serif;
+                margin: 0;
+                min-height: 200px;
+            }
+
+            .chat_event {
+                padding: 3px;
+            }
+            .in {
+                float: left;
+                margin-top: 2px;
+                padding: 3px;
+                background-color: powderblue;
+                border-radius: 3px;
+                display: block;
+                text-align: left;
+                width: 49%;
+            }
+            .to {
+                float: right;
+                margin-top: 2px;
+                background-color: beige;
+                border-radius: 3px;
+                display: block;
+                padding: 3px;
+                text-align: left;
+                width: 49%;
+            }
+
+            /*--------------*/
+            .header {
+                height: 40px;
+                background-color: dimgray;
+                color: white;
+                padding: 3px;
+            }
+            .header h2 {
+                margin-top: 3px;
+                margin-left: 10px;
+            }
+            .users_pan {
+                float: left;
+                width: 25%;
+                background-color: lightgray;
+                height: 100%;
+                min-height: 500px;
+            }
+            .users a{
+                color: darkslategrey;
+                font-size: 1.1em;
+                margin-left: 10px;
+            }
+
+            .usr_name {
+                font-size: 1.2em;
+                color: blue;
+                margin-left: 10px;
+                font-weight: bold;
+            }
+
+            .title {
+                height: 30px;
+            }
+            .title h1 {
+                margin-left: 10px;
+            }
+
+            .chat_pan {
+                width: 75%;
+                height: 100%;
+                float: left;
+            }
+
+            .board {
+                border: lightgray solid 1px;
+                margin: 0 auto;
+                border-radius: 4px;
+                min-height: 400px;
+                width: 99%;
+                overflow: scroll;
+            }
+            .frm_msg {
+                margin-left: 3px;
+                bottom: 40px;
+                float: bottom;
+            }
+
+            .msg {
+                float: left;
+                margin-top: 10px;
+                width: 86%;
+                height: 30px;
+                font-size: .8em;
+                position: relative;
+            }
+
+            .submit_msg {
+                height: 30px; !important;
+                width: 10%;
+                background-color: lightskyblue;
+                display: block;
+                cursor: pointer;
+                text-align: center;
+                padding-top: 7px;
+                border-radius: 4px;
+                text-decoration: none;
+                float: left;
+                margin-top: 10px;
+                margin-left: 5px;
+            }
+
+             footer {
+                 background-color: darkslategrey;
+                 height: 60px;
+                 width: 100%;
+                 color: white;
+                 padding-top: 3px;
+                 text-align: center;
+                 bottom: 0;
+                 position: absolute;
+             }
+
+            #login {
+                width: 65%;
+                height: 30px;
+                font-size: 1.1em;
+            }
+
+            #onLogin {
+                height: 30px; !important;
+                width: 10%;
+                background-color: lightskyblue;
+                display: block;
+                cursor: pointer;
+                text-align: center;
+                padding-top: 7px;
+                border-radius: 4px;
+                text-decoration: none;
+                float: right;
+                margin-left: 5px;
+            }
+            a.chat_to {
+                font-weight: bold;
+            }
+            a.chat_to::after {
+                content: '\00a0\00a0\2714';
+            }
+        </style>
+    </head>
+    <body>
+        <header class="header">
+            <h2>Welcome!</h2>
+        </header>
+        <div class="content">
+
+            <aside class="users_pan">
+                <span class="users"></span>
+                <p align="center">online</p>
+            </aside>
+
+            <aside class="chat_pan">
+                <div class="title">
+                    <h1 >Simple Chat <span class="chat_to_person" style="display: none"> ? </span>
+                        <button id="onChat">ON</button> <button id="offChat" disabled>OFF</button>
+                    </h1>
+                </div>
+
+                <div class="board">
+                    <div class="chat_event"> </div>
+                </div>
+
+                <form class="frm_msg">
+                    <textarea class="msg" id="msg" placeholder="your message"></textarea>
+                    <a href="#" class="submit_msg"> >>> </a>
+                    <div style="clear: both"></div>
+                </form>
+
+            </aside>
+             <div style="clear: both"></div>
+        </div>
+        <footer>
+            <p>OTUS graduation work course "<span style="color: yellow">python 2018-05</span>" by kapa </p>
+        </footer>
+
+
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close">&times;</span>
+                    <h2>Login in chat</h2>
+                </div>
+
+                <div class="modal-body">
+                    <form>
+                        <label for="login">What's your name?</label>
+                        <input type="text" value="" placeholder="input name please" id="login">
+                        <a href="#" id="onLogin">login</a>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+    </body>
+
+        <script>
+            var users = document.querySelector('.users'),
+                usr_name = document.getElementById("login"),
+                submit = document.querySelector('.submit_msg'),
+                person = document.querySelector('.chat_to_person'),
+                chat_event = document.querySelector('.chat_event'),
+                board = document.querySelector('.board'),
+                websocket = new WebSocket("ws://127.0.0.1:6789/");
+
+            users.onclick = function (event) {
+                var chat_to = document.querySelector('.chat_to');
+                if (chat_to !== null) {
+                    chat_to.classList.remove("chat_to");
+                }
+
+                person.textContent = event.target.getAttribute('href');
+                chat_event.textContent ='';
+                event.target.classList.add("chat_to");
+                // event.target.innerHTML += '<span>&#x2714;</span>';
+
+                websocket.send(JSON.stringify({
+                    action: 'replay',
+                    name: usr_name.value,
+                    'user_to': person.textContent.substring(1) }))
+            };
+
+            submit.onclick = function (event) {
+                var msg = document.getElementById('msg');
+
+                if (msg.value.trim().length > 0 && person.textContent.trim().length > 0) {
+                    websocket.send(JSON.stringify({'action': 'message_to',
+                                                    'name': usr_name.value,
+                                                    'user_to': person.textContent.substring(1),
+                                                    'message': msg.value}));
+                    msg.value = ''
+                }
+            };
+
+            websocket.onmessage = function (event) {
+                data = JSON.parse(event.data);
+
+                switch (data.type) {
+
+                    case 'chat':
+                        if (data.name.trim() === usr_name.value.trim()) {
+                            html = '<div class="in">'+data.msg+'</div><div style="clear:both"></div>';
+                        } else {
+                            html = '<div class="to">'+data.name+':'+data.msg+'</div><div style="clear:both"></div>';
+                        }
+
+                        chat_event.insertAdjacentHTML('beforeend', html);
+                        board.scrollTop = board.scrollHeight;
+                        break;
+
+                    case 'users':
+                        var a = '', html = '';
+                        if (data.users.length > 0) {
+                            a = data.users.split(',');
+                            a.forEach(function (e) {
+                                if (e.trim()===usr_name.value.trim()) {
+                                    html += '<span class="usr_name">'+e+'&nbsp;&#x2714;</span><br>'
+                                } else {
+                                    html += '<a href="#'+e.trim()+'">' + e + '</a></br>'
+                                }
+                            })
+                        }
+
+                        users.innerHTML = html;
+                        break;
+                    default:
+                        console.error('WTF', data)
+                }
+            };
+
+            // Get the modal
+            var modal = document.getElementById('myModal'),
+                btn = document.getElementById("onChat"),
+                lgn = document.getElementById("onLogin"),
+                off = document.getElementById('offChat'),
+                span = document.getElementsByClassName("close")[0];
+
+            btn.onclick = function() {
+                modal.style.display = "block";
+            };
+
+            // When the user clicks on <span> (x), close the modal
+            span.onclick = function() {
+                modal.style.display = "none";
+            };
+
+            lgn.onclick = function() {
+                if ( usr_name.value.length > 0) {
+                    websocket.send(JSON.stringify({action: 'connect', name: usr_name.value}));
+                    modal.style.display = "none";
+                    document.getElementById('offChat').disabled=false;
+                    document.getElementById('onChat').disabled=true
+                } else { alert('Your name please!') }
+            };
+
+            off.onclick = function (event) {
+                document.getElementById('offChat').disabled=true;
+                document.getElementById('onChat').disabled=false;
+                document.querySelector('.chat_event').textContent = ''
+                websocket.send(JSON.stringify({action: 'disconnect'}));
+            };
+
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    modal.style.display = "none";
+                }
+            }
+
+        </script>
+</html>
