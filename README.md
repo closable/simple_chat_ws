@@ -9,4 +9,4 @@ python3 chat_serv_br.py
 chat.html
 
 # 3 - screenshots
-![alt text](https://raw.githubusercontent.com/closable/simple_chat_ws/branch/img1.png)
+![Screenshot](img1.png)
